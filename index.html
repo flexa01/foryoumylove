@@ -16,12 +16,35 @@ interface TimeCounter {
 const MeryemHasanSite: React.FC = () => {
   const [timeCounter, setTimeCounter] = useState<TimeCounter>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [scrollY, setScrollY] = useState(0);
+  const [isLimitExceeded, setIsLimitExceeded] = useState(false);
 
+  // Play Store Gösterim Limiti Kontrolü
+  useEffect(() => {
+    // Uygulama Play Store'da yüksek ilgi gördüğünde belirlediğin sınırı
+    // aşmamasını sağlayacak gösterim sayacı mantığı.
+    // Not: Gerçek bir uygulamada bu veriyi sunucuda (Firebase vb.) tutmak daha güvenlidir.
+    const checkImpressionLimit = () => {
+      const currentImpressions = parseInt(localStorage.getItem('app_impressions') || '0', 10);
+      const MAX_IMPRESSION_LIMIT = 100000; // Durdurulmasını istediğin sınır
+
+      if (currentImpressions >= MAX_IMPRESSION_LIMIT) {
+        setIsLimitExceeded(true);
+      } else {
+        // Ziyaretçiyi kaydet
+        localStorage.setItem('app_impressions', (currentImpressions + 1).toString());
+      }
+    };
+
+    checkImpressionLimit();
+  }, []);
+
+  // Sayaç ve Scroll Eventleri
   useEffect(() => {
     const updateCounter = () => {
       const startDate = new Date('2026-03-24T00:00:00');
       const now = new Date();
-      const diff = now.getTime() - startDate.getTime();
+      // Geçmiş bir tarih olduğu için negatif değer çıkmaması adına mutlak değer veya kontrol eklenmeli
+      const diff = Math.max(0, now.getTime() - startDate.getTime());
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -34,8 +57,14 @@ const MeryemHasanSite: React.FC = () => {
     updateCounter();
     const interval = setInterval(updateCounter, 1000);
 
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => {
+      // Mobilde gereksiz performans kaybını önlemek için requestAnimationFrame kullanılabilir
+      window.requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+      });
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       clearInterval(interval);
@@ -56,110 +85,126 @@ const MeryemHasanSite: React.FC = () => {
     }
   ];
 
+  // Eğer sınır aşılırsa gösterilecek yedek ekran
+  if (isLimitExceeded) {
+    return (
+      <div className="min-h-screen bg-black text-amber-200 flex flex-col items-center justify-center p-8 text-center">
+        <h1 className="text-3xl font-bold mb-4">Teşekkürler!</h1>
+        <p>Uygulamamız belirlenen gösterim sınırına ulaşmıştır.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen text-white overflow-hidden" style={{
+    <div className="min-h-screen text-white overflow-x-hidden" style={{
       background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)',
-      minHeight: '100vh'
     }}>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-700 rounded-full mix-blend-screen blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-40 right-20 w-96 h-96 bg-gray-700 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-amber-600 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-20 left-10 w-48 md:w-72 h-48 md:h-72 bg-amber-700 rounded-full mix-blend-screen blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-40 right-10 md:right-20 w-64 md:w-96 h-64 md:h-96 bg-gray-700 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 right-1/4 w-40 md:w-64 h-40 md:h-64 bg-amber-600 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Header Section */}
-      <header className="relative pt-24 px-6 md:px-12 text-center">
-        <div className="mb-12 animate-fade-in">
-          <h1 className="text-7xl md:text-8xl font-black mb-6 tracking-tight" style={{
+      <header className="relative pt-16 md:pt-24 px-4 md:px-12 text-center flex flex-col items-center">
+        <div className="mb-8 md:mb-12 animate-fade-in">
+          <h1 className="text-5xl md:text-8xl font-black mb-4 md:mb-6 tracking-tight" style={{
             background: 'linear-gradient(135deg, #f5f5f5 0%, #d4af37 50%, #f5f5f5 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
             M & H
           </h1>
-          <p className="text-2xl md:text-3xl text-gray-300 font-light tracking-widest">MERYEM • HASAN</p>
+          <p className="text-xl md:text-3xl text-gray-300 font-light tracking-widest">MERYEM • HASAN</p>
         </div>
 
-        {/* Time Counter */}
-        <div className="inline-flex items-center gap-2 px-12 py-8 rounded-sm border border-amber-700/50 bg-black/40 backdrop-blur-xl mb-16 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <div className="text-center">
-            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.days).padStart(2, '0')}</div>
-            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Gün</div>
+        {/* Time Counter - Mobil için uyumlu hale getirildi */}
+        <div className="flex flex-row justify-center items-center gap-2 md:gap-4 px-4 md:px-12 py-6 md:py-8 w-full max-w-3xl rounded-sm border border-amber-700/50 bg-black/40 backdrop-blur-xl mb-12 md:mb-16 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          
+          <div className="text-center flex-1">
+            <div className="text-3xl sm:text-5xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.days).padStart(2, '0')}</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest mt-1 md:mt-2">Gün</div>
           </div>
           
-          <div className="text-amber-700/50 text-3xl">:</div>
+          <div className="text-amber-700/50 text-xl sm:text-3xl pb-4 md:pb-6">:</div>
           
-          <div className="text-center">
-            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.hours).padStart(2, '0')}</div>
-            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Saat</div>
+          <div className="text-center flex-1">
+            <div className="text-3xl sm:text-5xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.hours).padStart(2, '0')}</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest mt-1 md:mt-2">Saat</div>
           </div>
           
-          <div className="text-amber-700/50 text-3xl">:</div>
+          <div className="text-amber-700/50 text-xl sm:text-3xl pb-4 md:pb-6">:</div>
           
-          <div className="text-center">
-            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.minutes).padStart(2, '0')}</div>
-            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Dakika</div>
+          <div className="text-center flex-1">
+            <div className="text-3xl sm:text-5xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.minutes).padStart(2, '0')}</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest mt-1 md:mt-2">Dk</div>
           </div>
           
-          <div className="text-amber-700/50 text-3xl">:</div>
+          <div className="text-amber-700/50 text-xl sm:text-3xl pb-4 md:pb-6">:</div>
           
-          <div className="text-center">
-            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.seconds).padStart(2, '0')}</div>
-            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Saniye</div>
+          <div className="text-center flex-1">
+            <div className="text-3xl sm:text-5xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.seconds).padStart(2, '0')}</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest mt-1 md:mt-2">Sn</div>
           </div>
         </div>
 
-        <p className="text-gray-400 text-lg font-light">Şu saatten beri sevgiliyiz</p>
+        <p className="text-gray-400 text-base md:text-lg font-light text-center">Şu saatten beri sevgiliyiz</p>
       </header>
 
       {/* Main Content */}
-      <main className="relative px-6 md:px-12 py-20">
+      <main className="relative px-4 md:px-12 py-12 md:py-20">
+        
         {/* Our Story Section */}
-        <section className="max-w-3xl mx-auto mb-24">
-          <div className="rounded-none border-l-4 border-r-4 border-t border-b border-amber-700/40 bg-black/60 backdrop-blur-xl p-12 md:p-16" style={{
-            transform: `translateY(${scrollY * 0.3}px)`
+        <section className="max-w-3xl mx-auto mb-16 md:mb-24">
+          <div className="rounded-none border-l-4 border-r-4 border-t border-b border-amber-700/40 bg-black/60 backdrop-blur-xl p-6 md:p-16 transition-transform duration-300 ease-out" style={{
+            transform: `translateY(${scrollY * 0.1}px)` // Mobilde göz yormaması için hız düşürüldü
           }}>
-            <h2 className="text-4xl md:text-5xl font-black mb-8 text-amber-200 uppercase tracking-widest">Bizim Hikayemiz</h2>
-            <p className="text-lg leading-relaxed text-gray-300 mb-6 font-light">
+            <h2 className="text-3xl md:text-5xl font-black mb-6 md:mb-8 text-amber-200 uppercase tracking-widest text-center md:text-left">Bizim Hikayemiz</h2>
+            <p className="text-base md:text-lg leading-relaxed text-gray-300 mb-6 font-light">
               24 Mart 2026. Günü hiç unutamayız. O tarihten bu yana yaşanan her an, paylaşılan her anlık gülüş, 
               birbirini anlama çabası... Hepsi aşkın bir parçası.
             </p>
-            <p className="text-lg leading-relaxed text-gray-300 font-light">
+            <p className="text-base md:text-lg leading-relaxed text-gray-300 font-light">
               Zamanın geçişi bizi birbirimize daha çok yaklaştırıyor. Seninle her saniye değerli, 
               seninle her saat fark yaratan bir şeydir.
             </p>
           </div>
         </section>
 
-        {/* Timeline Section */}
-        <section className="max-w-4xl mx-auto mb-24">
-          <h2 className="text-4xl md:text-5xl font-black text-center mb-20 text-amber-200 uppercase tracking-widest">Anlarımız</h2>
+        {/* Timeline Section - Mobil için Tek Sütun yapıldı */}
+        <section className="max-w-4xl mx-auto mb-16 md:mb-24 px-2 md:px-0">
+          <h2 className="text-3xl md:text-5xl font-black text-center mb-12 md:mb-20 text-amber-200 uppercase tracking-widest">Anlarımız</h2>
           
           <div className="relative">
-            {/* Timeline Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-amber-700/50 via-amber-700/30 to-transparent"></div>
+            {/* Timeline Line (Mobilde sola, Masaüstünde ortaya hizalı) */}
+            <div className="absolute left-4 md:left-1/2 transform md:-translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-amber-700/50 via-amber-700/30 to-transparent"></div>
 
             {/* Timeline Events */}
-            <div className="space-y-20">
+            <div className="space-y-12 md:space-y-20 pb-8">
               {timelineEvents.map((event, index) => (
-                <div key={index} className={`animate-fade-in ${index === 0 ? '' : 'animation-delay-200'}`} style={{
+                <div key={index} className={`animate-fade-in relative ${index === 0 ? '' : 'animation-delay-200'}`} style={{
                   animationDelay: `${index * 0.3}s`
                 }}>
-                  <div className={`flex items-start gap-8 ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
+                  <div className={`flex flex-col md:flex-row items-start md:items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                    
+                    {/* Masaüstü Sol Boşluk */}
+                    <div className="hidden md:block flex-1"></div>
+                    
                     {/* Timeline Dot */}
-                    <div className="flex-1"></div>
-                    <div className="relative z-10">
-                      <div className="w-5 h-5 bg-amber-700 rounded-full shadow-lg shadow-amber-700/50 border-2 border-amber-200"></div>
+                    <div className="absolute left-4 md:relative md:left-auto md:z-10 transform -translate-x-1/2 md:translate-x-0 mt-6 md:mt-0">
+                      <div className="w-4 h-4 md:w-5 md:h-5 bg-amber-700 rounded-full shadow-lg shadow-amber-700/50 border-2 border-amber-200"></div>
                     </div>
-                    <div className="flex-1"></div>
+
+                    {/* Masaüstü Sağ Boşluk */}
+                    <div className="hidden md:block flex-1"></div>
 
                     {/* Content */}
-                    <div className={`flex-1 ${index % 2 === 0 ? 'text-right pr-8' : 'text-left pl-8'}`}>
-                      <div className="rounded-none border border-amber-700/30 bg-black/50 backdrop-blur p-8">
-                        <div className="text-xs text-amber-300 font-bold mb-3 uppercase tracking-widest">{event.date}</div>
-                        <h3 className="text-2xl font-black text-amber-100 mb-3">{event.title}</h3>
-                        <p className="text-gray-400 text-lg font-light">{event.description}</p>
+                    <div className={`w-full md:flex-1 pl-12 md:pl-0 ${index % 2 === 0 ? 'md:pr-12 md:text-right' : 'md:pl-12 md:text-left'}`}>
+                      <div className="rounded-none border border-amber-700/30 bg-black/50 backdrop-blur p-6 md:p-8">
+                        <div className="text-[10px] md:text-xs text-amber-300 font-bold mb-2 md:mb-3 uppercase tracking-widest">{event.date}</div>
+                        <h3 className="text-xl md:text-2xl font-black text-amber-100 mb-2 md:mb-3">{event.title}</h3>
+                        <p className="text-gray-400 text-sm md:text-lg font-light">{event.description}</p>
                       </div>
                     </div>
                   </div>
@@ -170,24 +215,24 @@ const MeryemHasanSite: React.FC = () => {
         </section>
 
         {/* Elegant Divider */}
-        <div className="max-w-2xl mx-auto mb-24">
+        <div className="max-w-2xl mx-auto mb-16 md:mb-24">
           <div className="flex items-center gap-4 justify-center">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-700/50"></div>
-            <div className="text-amber-700 text-2xl">◆</div>
+            <div className="text-amber-700 text-xl md:text-2xl">◆</div>
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-700/50"></div>
           </div>
         </div>
 
         {/* Footer Message */}
-        <section className="max-w-3xl mx-auto text-center py-16">
-          <div className="rounded-none border border-amber-700/30 bg-black/60 backdrop-blur-xl p-16">
-            <p className="text-3xl md:text-4xl font-black text-amber-100 mb-6 uppercase tracking-widest">
+        <section className="max-w-3xl mx-auto text-center pb-12">
+          <div className="rounded-none border border-amber-700/30 bg-black/60 backdrop-blur-xl p-8 md:p-16">
+            <p className="text-2xl md:text-4xl font-black text-amber-100 mb-4 md:mb-6 uppercase tracking-widest leading-snug">
               Seninle Yaşamak Bir Şans
             </p>
-            <p className="text-xl text-gray-400 font-light mb-2">
+            <p className="text-base md:text-xl text-gray-400 font-light mb-2">
               Her saniye, her dakika, her saat sayılı
             </p>
-            <p className="text-lg text-amber-300 font-bold">
+            <p className="text-base md:text-lg text-amber-300 font-bold">
               Hasan, seninle sevgiliyim
             </p>
           </div>
@@ -218,7 +263,7 @@ const MeryemHasanSite: React.FC = () => {
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -227,7 +272,7 @@ const MeryemHasanSite: React.FC = () => {
         }
 
         .animate-fade-in {
-          animation: fadeIn 1s ease-out forwards;
+          animation: fadeIn 0.8s ease-out forwards;
           opacity: 0;
         }
 
@@ -236,12 +281,8 @@ const MeryemHasanSite: React.FC = () => {
         }
 
         @keyframes pulse {
-          0%, 100% {
-            opacity: 0.4;
-          }
-          50% {
-            opacity: 0.2;
-          }
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.2; }
         }
 
         .animate-pulse {
@@ -250,7 +291,7 @@ const MeryemHasanSite: React.FC = () => {
 
         /* Luxury scrollbar */
         ::-webkit-scrollbar {
-          width: 8px;
+          width: 6px;
         }
 
         ::-webkit-scrollbar-track {
