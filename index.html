@@ -1,0 +1,273 @@
+import React, { useState, useEffect } from 'react';
+
+interface TimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+}
+
+interface TimeCounter {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+const MeryemHasanSite: React.FC = () => {
+  const [timeCounter, setTimeCounter] = useState<TimeCounter>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const updateCounter = () => {
+      const startDate = new Date('2026-03-24T00:00:00');
+      const now = new Date();
+      const diff = now.getTime() - startDate.getTime();
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeCounter({ days, hours, minutes, seconds });
+    };
+
+    updateCounter();
+    const interval = setInterval(updateCounter, 1000);
+
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const timelineEvents: TimelineEvent[] = [
+    {
+      date: '24 Mart 2026',
+      title: 'Başlangıç',
+      description: 'Sevgili olduk'
+    },
+    {
+      date: '2026',
+      title: 'Birlikte Yaşamak',
+      description: 'Her anın kıymetini biliyoruz'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen text-white overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)',
+      minHeight: '100vh'
+    }}>
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-700 rounded-full mix-blend-screen blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-40 right-20 w-96 h-96 bg-gray-700 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-amber-600 rounded-full mix-blend-screen blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      {/* Header Section */}
+      <header className="relative pt-24 px-6 md:px-12 text-center">
+        <div className="mb-12 animate-fade-in">
+          <h1 className="text-7xl md:text-8xl font-black mb-6 tracking-tight" style={{
+            background: 'linear-gradient(135deg, #f5f5f5 0%, #d4af37 50%, #f5f5f5 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            M & H
+          </h1>
+          <p className="text-2xl md:text-3xl text-gray-300 font-light tracking-widest">MERYEM • HASAN</p>
+        </div>
+
+        {/* Time Counter */}
+        <div className="inline-flex items-center gap-2 px-12 py-8 rounded-sm border border-amber-700/50 bg-black/40 backdrop-blur-xl mb-16 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="text-center">
+            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.days).padStart(2, '0')}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Gün</div>
+          </div>
+          
+          <div className="text-amber-700/50 text-3xl">:</div>
+          
+          <div className="text-center">
+            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.hours).padStart(2, '0')}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Saat</div>
+          </div>
+          
+          <div className="text-amber-700/50 text-3xl">:</div>
+          
+          <div className="text-center">
+            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.minutes).padStart(2, '0')}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Dakika</div>
+          </div>
+          
+          <div className="text-amber-700/50 text-3xl">:</div>
+          
+          <div className="text-center">
+            <div className="text-6xl md:text-7xl font-bold text-amber-200 tabular-nums">{String(timeCounter.seconds).padStart(2, '0')}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-widest mt-2">Saniye</div>
+          </div>
+        </div>
+
+        <p className="text-gray-400 text-lg font-light">Şu saatten beri sevgiliyiz</p>
+      </header>
+
+      {/* Main Content */}
+      <main className="relative px-6 md:px-12 py-20">
+        {/* Our Story Section */}
+        <section className="max-w-3xl mx-auto mb-24">
+          <div className="rounded-none border-l-4 border-r-4 border-t border-b border-amber-700/40 bg-black/60 backdrop-blur-xl p-12 md:p-16" style={{
+            transform: `translateY(${scrollY * 0.3}px)`
+          }}>
+            <h2 className="text-4xl md:text-5xl font-black mb-8 text-amber-200 uppercase tracking-widest">Bizim Hikayemiz</h2>
+            <p className="text-lg leading-relaxed text-gray-300 mb-6 font-light">
+              24 Mart 2026. Günü hiç unutamayız. O tarihten bu yana yaşanan her an, paylaşılan her anlık gülüş, 
+              birbirini anlama çabası... Hepsi aşkın bir parçası.
+            </p>
+            <p className="text-lg leading-relaxed text-gray-300 font-light">
+              Zamanın geçişi bizi birbirimize daha çok yaklaştırıyor. Seninle her saniye değerli, 
+              seninle her saat fark yaratan bir şeydir.
+            </p>
+          </div>
+        </section>
+
+        {/* Timeline Section */}
+        <section className="max-w-4xl mx-auto mb-24">
+          <h2 className="text-4xl md:text-5xl font-black text-center mb-20 text-amber-200 uppercase tracking-widest">Anlarımız</h2>
+          
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-amber-700/50 via-amber-700/30 to-transparent"></div>
+
+            {/* Timeline Events */}
+            <div className="space-y-20">
+              {timelineEvents.map((event, index) => (
+                <div key={index} className={`animate-fade-in ${index === 0 ? '' : 'animation-delay-200'}`} style={{
+                  animationDelay: `${index * 0.3}s`
+                }}>
+                  <div className={`flex items-start gap-8 ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
+                    {/* Timeline Dot */}
+                    <div className="flex-1"></div>
+                    <div className="relative z-10">
+                      <div className="w-5 h-5 bg-amber-700 rounded-full shadow-lg shadow-amber-700/50 border-2 border-amber-200"></div>
+                    </div>
+                    <div className="flex-1"></div>
+
+                    {/* Content */}
+                    <div className={`flex-1 ${index % 2 === 0 ? 'text-right pr-8' : 'text-left pl-8'}`}>
+                      <div className="rounded-none border border-amber-700/30 bg-black/50 backdrop-blur p-8">
+                        <div className="text-xs text-amber-300 font-bold mb-3 uppercase tracking-widest">{event.date}</div>
+                        <h3 className="text-2xl font-black text-amber-100 mb-3">{event.title}</h3>
+                        <p className="text-gray-400 text-lg font-light">{event.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Elegant Divider */}
+        <div className="max-w-2xl mx-auto mb-24">
+          <div className="flex items-center gap-4 justify-center">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-700/50"></div>
+            <div className="text-amber-700 text-2xl">◆</div>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-700/50"></div>
+          </div>
+        </div>
+
+        {/* Footer Message */}
+        <section className="max-w-3xl mx-auto text-center py-16">
+          <div className="rounded-none border border-amber-700/30 bg-black/60 backdrop-blur-xl p-16">
+            <p className="text-3xl md:text-4xl font-black text-amber-100 mb-6 uppercase tracking-widest">
+              Seninle Yaşamak Bir Şans
+            </p>
+            <p className="text-xl text-gray-400 font-light mb-2">
+              Her saniye, her dakika, her saat sayılı
+            </p>
+            <p className="text-lg text-amber-300 font-bold">
+              Hasan, seninle sevgiliyim
+            </p>
+          </div>
+        </section>
+      </main>
+
+      {/* Bottom Decoration */}
+      <div className="relative h-24 -mt-12 pointer-events-none" style={{
+        background: 'linear-gradient(to top, #0a0a0a, transparent)'
+      }}></div>
+
+      {/* Styles */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&family=Lora:wght@400;600&display=swap');
+
+        * {
+          font-family: 'Lora', serif;
+        }
+
+        h1, h2, h3 {
+          font-family: 'Bodoni Moda', serif;
+        }
+
+        .tabular-nums {
+          font-variant-numeric: tabular-nums;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 1s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.4;
+          }
+          50% {
+            opacity: 0.2;
+          }
+        }
+
+        .animate-pulse {
+          animation: pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Luxury scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: rgba(217, 119, 6, 0.5);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(217, 119, 6, 0.8);
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default MeryemHasanSite;
